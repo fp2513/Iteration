@@ -9,3 +9,13 @@ library(tidyverse)
 library(rvest)
 ```
 
+Functions to use when using the same basic code more than two times (iteration)
+Functions like mapping in maths (have an input then have a described operation and have an output)
+
+Scoping: if in function there is some variable that you haven't defined then the function will scope your entire R environment to see whether you had previously defined this variable (but generally this is something that you do not want)
+want to make sure that everything that you need for the function to work is defined inside the function (since work environemnt can change)
+Function should be self contained and is everything that this function needs defined in the function 
+
+Writing a function that is clear is really important 
+
+
