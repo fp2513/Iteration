@@ -247,12 +247,78 @@ NSDUH_import(html = nsduh_html, table_num = 5)
 ```
 
 
-Learning Check to have a dataframe that has "marj", "coc"
+Learning Check to have a dataframe that has the drug name, then telling me whcih table number it is, then the table itself in a dataframe
+
+Define first a tibble of things that i want 
 
 ```{r}
+nsduh = 
+  tibble(
+    drug = c("marj", "cocaine", "herion"), 
+    table_n = c(1, 4, 5)
+  ) %>% 
+  mutate(table = map(table_n, NSDUH_import, html = nsduh_html)) %>% 
+  unnest(table) #unnest table to see the entire dataframe (expands out the list)
 
+nsduh
+
+nsduh %>% filter(State == "New York") #can continue to do all the tidyverse things that we have learnt beforehand
 ```
 
+## Weather data 
 
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USW00022534", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2021-01-01",
+    date_max = "2022-12-31") |>
+  mutate(
+    name = recode(
+      id, 
+      USW00094728 = "CentralPark_NY", 
+      USW00022534 = "Molokai_HI",
+      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) |>
+  select(name, id, everything())
+```
 
+So far seen creating a list column by hand or by function
 
+```{r}
+weather_nest = 
+  weather_df %>% 
+  nest(data = date:tmin)
+
+weather_nest
+```
+
+nesting everything from date to tmin columns into a new column called data
+
+```{r}
+weather_nest[["data"]]
+```
+Giving separated out based on the id 
+
+```{r}
+weather_nest[["data"]][[1]]
+```
+
+Let's try regressing tmax on tmin
+
+```{r}
+lm(tmax ~ tmin, data = weather_nest[["data"]][[1]])
+lm(tmax ~ tmin, data = weather_nest[["data"]][[2]])
+lm(tmax ~ tmin, data = weather_nest[["data"]][[3]])
+```
+
+```{r}
+weather_nest %>% 
+  mutate(model_fit = map(data, \(x) lm(tmax ~ tmin, data = x))) %>% 
+  pull(model_fit)
+
+#x is the thing that im mapping across and plug it in each time into the function lm
+```
+Fit weather station specific regressions 
