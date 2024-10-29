@@ -6,6 +6,7 @@ date: "2024-10-24"
 
 ```{r setup, include=FALSE}
 library(tidyverse)
+library(readxl)
 library(rvest)
 ```
 
@@ -104,5 +105,265 @@ If the input is a character vector i want this to happen but if it is numeric i 
 
 This is relatively simple (one input one output)
 
+## A new function! Multiple outputs
 
+```{r}
+mean_and_sd = function(x) {
+  
+  mean_x = mean(x)
+  sd_x = sd(x)
+  
+  out_df = 
+    tibble(
+      mean = mean_x, 
+      sd = sd_x
+    )
+  
+  return(out_df)
+}
+
+mean_and_sd(x_vec)
+```
+
+In this function () this is my input and my {} defines what i want to do and here i want to do two things, compute the mean and sd and i want the function to give me both results 
+
+Rather than have it spit it out, format an output dataframe 
+
+
+## Check stuff using a simulation 
+
+Checking that the sample mean and sd are close to true population mean and sd 
+
+Create a simulation df with one column
+```{r}
+sim_df = 
+  tibble(
+    x = rnorm(30, 10, 5)
+  )
+
+sim_df %>% 
+  summarise(
+    mean = mean(x),
+    sd = sd(x)
+  )
+```
+
+Could run this over and over to see different samples of 30 variables of the normal dis to see whether close to true mean 10 and true sd 5
+
+```{r}
+sim_mean_sd = function(samp_size, true_mean, true_sd) {
+  
+  sim_df = 
+  tibble(
+    x = rnorm(samp_size, true_mean, true_sd)
+  )
+
+out_df =
+  sim_df %>% 
+  summarise(
+    mean = mean(x),
+    sd = sd(x)
+  )
+
+return(out_df)
+
+}
+
+sim_mean_sd(samp_size = 3000, true_mean = 4, true_sd = 12)
+```
+
+Can play around here to see whether Central Limit Theorem works
+Increasing sample size and smaller sd 
+
+See that i defined my argument (samp_size = 3000, true_mean = 4, true_sd = 12), but we can take advantage that it will read values by order so could just write it as (30, 4, 12) at the end and it would still run the same 
+
+```{r}
+sim_mean_sd = function(samp_size, true_mean, true_sd) {
+  
+  sim_df = 
+  tibble(
+    x = rnorm(samp_size, true_mean, true_sd)
+  )
+
+out_df =
+  sim_df %>% 
+  summarise(
+    mean = mean(x),
+    sd = sd(x)
+  )
+
+return(out_df)
+
+}
+
+sim_mean_sd(3000, 4, 12)
+```
+
+
+If we want to set the true mean and true sd constant and just have sample size varied then can define in the start 
+
+```{r}
+sim_mean_sd = function(samp_size, true_mean = 5, true_sd = 6) {
+  
+  sim_df = 
+  tibble(
+    x = rnorm(samp_size, true_mean, true_sd)
+  )
+
+out_df =
+  sim_df %>% 
+  summarise(
+    mean = mean(x),
+    sd = sd(x)
+  )
+
+return(out_df)
+
+}
+
+sim_mean_sd(samp_size = 3000, true_mean = 4)
+```
+
+Just because there is a default value doesn't mean that you cannot overwrite it 
+
+See above that we set default for true mean and true sd but then we overwrote the true mean and kept the default for true sd 
+
+## LOTR dataframe
+
+```{r}
+fellowship_df = 
+  read_excel("data/LotR_Words.xlsx", range = "B3:D6") %>% 
+  mutate(movie = "fellowship")
+
+two_towers = readxl::read_excel("data/LotR_Words.xlsx", range = "F3:H6") %>% 
+  mutate(movie = "two_towers")
+
+return_king = readxl::read_excel("data/LotR_Words.xlsx", range = "J3:L6") %>%
+  mutate(movie = "return_king")
+```
+
+This is repetitive to import the LOTR data can be easy to make mistakes doign iteratively so create a function that does it 
+
+Think about the steps that i took for each one: path, range, mutate movie name
+
+```{r}
+LOTR_import = function(cell_range, movie_title) {
+  
+  movie_df = 
+    read_excel("data/LotR_Words.xlsx", range = cell_range) %>% 
+    mutate(movie = movie_title) %>% 
+    janitor::clean_names() %>% 
+    pivot_longer(
+      female:male,
+      names_to = "sex",
+      values_to = "words"
+    ) %>% 
+    select(movie, everything())
+  
+  return(movie_df)
+}
+
+lotr_df = 
+  bind_rows(LOTR_import("B3:D6", "fellowship"),
+            LOTR_import("F3:H6", "two_towers"),
+            LOTR_import("J3:L6", "return_king")
+  )
+```
+
+Functions has to have 3 things: inputs, operation, output 
+
+Think about what i needed to change (cells names and movie title)
+With the supplied cell range and movie title
+
+Can put into the function operations a code chunk that you know already exists then substitute the specific variables with the general variable names To make them arguments rather than specific inputs 
+
+Now can iteratively change all, updated with pivoting to pivot all and not have to write it out each time 
+
+
+## NSDUH 
+
+```{r}
+nsduh_url = "http://samhda.s3-us-gov-west-1.amazonaws.com/s3fs-public/field-uploads/2k15StateFiles/NSDUHsaeShortTermCHG2015.htm"
+
+nsduh_html = read_html(nsduh_url)
+
+data_marj = 
+  nsduh_html %>% 
+  html_table() %>% 
+  nth(1) %>% 
+  slice(-1) %>% 
+  mutate(drug = "marj")
+
+data_coca = 
+  nsduh_html %>% 
+  html_table() %>% 
+  nth(4) %>% 
+  slice(-1) %>% 
+  mutate(drug = "cocaine")
+
+data_hero = 
+  nsduh_html %>% 
+  html_table() %>% 
+  nth(5) %>% 
+  slice(-1) %>% 
+  mutate(drug = "heroin")
+
+```
+
+Keep track of what i am changing everytime (so that i can find the backbone of my function)
+```{r}
+NSDUH_import = function(table_num, drug_name) {
+  
+  drug_df = 
+    nsduh_html %>% 
+    html_table() %>% 
+    nth(table_num) %>% 
+    slice(-1) %>% 
+    mutate(drug = drug_name)
+  
+  return(drug_df)
+}
+  
+NSDUH_import(1, "marj")
+NSDUH_import(4, "cocaine")
+NSDUH_import(5, "heroin")
+
+```
+
+REALISE THAT FOR THIS THE FUNCTION IS SCOPING for nsduh_html since it is not defined in the input argument (table_num, drug_name)
+it has scoped my R environment what nsduh_html is 
+
+Can change this to define better the html 
+
+```{r}
+NSDUH_import = function(html, table_num, drug_name) {
+  
+  drug_df = 
+    html %>% 
+    html_table() %>% 
+    nth(table_num) %>% 
+    slice(-1) %>% 
+    mutate(drug = drug_name)
+  
+  return(drug_df)
+}
+  
+NSDUH_import(html = nsduh_html, 1, "marj")
+NSDUH_import(html = nsduh_html, 4, "cocaine")
+NSDUH_import(html = nsduh_html, 5, "heroin")
+
+```
+
+A stylistic choice is to keep a source folder and an R-script with the function there. 
+This means that do to have to have the function there (do not need to necessarily see the function in the R Markdown file just need to see that it works, also useful if have multiple R Markdown files that want to use the same function then can just continue to source from R script rather than repeated function)
+
+Writing a function to get each table
+```{r}
+source("functions_source/nsduh_table_format.R")
+nsduh_df = bind_rows(
+  NSDUH_import(html = nsduh_html, 1, "marj"),
+  NSDUH_import(html = nsduh_html, 4, "cocaine"),
+  NSDUH_import(html = nsduh_html, 5, "heroin")
+)
+```
 

@@ -1,0 +1,13 @@
+---
+title: "20241029_Iteration_and_Listcols"
+output: github_document
+date: "2024-10-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+We write a function because we would do the same basic code over and over again. Process doing over and over is iterations. Take advantage of the formal structure 
+
+Loop functions (avoid keeping track input / output list), easier to read 
