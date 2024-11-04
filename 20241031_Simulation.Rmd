@@ -62,6 +62,78 @@ Suppose running this over and over again, what would the distribution of the mea
 (drawing from normal dis population, sample mean should be centered around true mean and sd of sample mean is the population sd divided by sample size); establish by statistics
 
 
+## Let's stimualte a lot 
+
+Not running same line of code over and over again, but doing it formally 
+
+Start with a for loop
+Need to have the output then have the for loop itself
+
+```{r}
+output = vector("list", length = 100)
+
+for (i in 1:100) {
+  
+  output[[i]] = sim_mean_sd(samp_size = 30)
+  
+} #for each iteration from 1 to 100 i need to do something (run sim_mean_sdw with sample size 30)
+
+#Then need to save the save the output of i
+
+#more manageable if bind rows together 
+
+bind_rows(output)
+```
+
+Looking at this:
+I have gone out 100 times, each time taking a sample of 30 from a population with a true mean of 3 and sd of 4 
+Given each sample compute the mean and sd for each sample 
+
+## Let's use a loop function 
+
+In the for loop previously there is an output loop, but there was no input list. 
+
+In the case where we had an input this (for this input do this for this input do this), we used map 
+Each input in the input list applied to function to get an output list 
+
+Here different, we just want to do the same thing over and over again --> rerun 
+rerun(some number of times, some thing)
+
+```{r}
+sim_results = 
+  rerun(100, sim_mean_sd(samp_size = 30)) %>% 
+  bind_rows()
+```
+
+## Let's take a look at the 100 sample mean and sd results that we got 
+
+wrote a function, use rerun, and binding rows 
+
+Can start to do data manipulation to this 
+
+```{r}
+sim_results %>% 
+  ggplot(aes(x = mean)) + geom_density()
+
+sim_results %>% 
+  summarise(
+    avg_samp_mean = mean(mean),
+    sd_samp_mean = sd(mean)
+  )
+```
+This shows the distribution of the sample mean across the 100 experiments 
+(centered around 3 which makes sense as the true population mean we set was 3)
+
+And the sample sd should be able the population sd / sample size 30 ~ 0.7
+
+```{r}
+sim_results %>% 
+  ggplot(aes(x = sd)) + geom_density()
+```
+
+dis of sample sd is about 4 but unlike the dis of sample mean the dis is not normally dis, there is a heavier tail 
+Through simulation we can learn more about this dis, about what the shape of the dis of sample sd looks like in repeated sampling 
+
 
 
 
